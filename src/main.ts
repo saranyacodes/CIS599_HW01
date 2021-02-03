@@ -81,7 +81,59 @@ function main() {
   document.body.appendChild(stats.domElement);
 
   // Add controls to the gui
-  const gui = new DAT.GUI();
+  const gui = new DAT.GUI({});
+
+    //add controls for height 
+  var h = {height: 50}; 
+  var h_gui = gui.add(h, 'height', 0, 100); 
+  h_gui.onChange = function (newHeight) {
+    console.log("Value changed to:  ", newHeight);
+    alert("Value changed to:  " + newHeight);
+  };
+  h_gui.listen(); 
+
+//example for passing through changing values 
+  var person = {
+    name: 'Anne',
+    oldName: 'Anne',
+    setName: function() {
+      var oldName = this.oldName;
+      var newName = this.name;
+      alert('Changing ' + oldName + " to " + newName);
+      this.oldName = this.name;
+    }
+};
+
+gui.add(person, 'name');
+gui.add(person, 'setName');
+//end example  
+
+  var palette = {
+    color1: '#FF0000', // CSS string
+    color2: [ 0, 128, 255 ], // RGB array
+    color3: [ 0, 128, 255, 0.3 ], // RGB with alpha
+    color4: { h: 350, s: 0.9, v: 0.3 } // Hue, saturation, value
+  };
+
+  gui.addColor(palette, 'color1');
+  gui.addColor(palette, 'color2');
+  gui.addColor(palette, 'color3');
+  gui.addColor(palette, 'color4');
+
+  //for the biome types 
+ var text =
+ {
+     biomeType: 'someName',
+     setType: function() {
+      var oldName = this.oldName;
+      var newName = this.name;
+      alert('Changing ' + oldName + " to " + newName);
+      this.oldName = this.name;
+    }
+ }
+ gui.add(text, 'biomeType', { DreadMountains: 'A', CottonCandyForest: 'B', Dynamic: 'C' } );
+
+
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -134,6 +186,9 @@ function main() {
 
   // This function will be called every frame
   function tick() {
+    //var print = h.height; 
+   // console.log(print); 
+
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
