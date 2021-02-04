@@ -23,6 +23,10 @@ let sPressed: boolean;
 let dPressed: boolean;
 let planePos: vec2;
 
+//trying to add GUI elements 
+let heightGUI: number;
+let biomeGUI: number; 
+
 function loadScene() {
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
@@ -91,6 +95,7 @@ function main() {
     alert("Value changed to:  " + newHeight);
   };
   h_gui.listen(); 
+  heightGUI = h.height; 
 
 //example for passing through changing values 
   var person = {
@@ -121,17 +126,13 @@ gui.add(person, 'setName');
   gui.addColor(palette, 'color4');
 
   //for the biome types 
- var text =
+ var bType =
  {
-     biomeType: 'someName',
-     setType: function() {
-      var oldName = this.oldName;
-      var newName = this.name;
-      alert('Changing ' + oldName + " to " + newName);
-      this.oldName = this.name;
-    }
+     biomeType: 1,
  }
- gui.add(text, 'biomeType', { DreadMountains: 'A', CottonCandyForest: 'B', Dynamic: 'C' } );
+ var bt = gui.add(bType, 'biomeType', { DreadMountains: 1, CottonCandyForest: 2, FlatWasteLand: 3 } );
+ biomeGUI = bType.biomeType; 
+
 
 
 
@@ -186,8 +187,20 @@ gui.add(person, 'setName');
 
   // This function will be called every frame
   function tick() {
-    //var print = h.height; 
-   // console.log(print); 
+   
+    //functions which will update the GUI 
+   if (heightGUI != h.height) {
+     heightGUI = h.height; 
+     lambert.setHeight(heightGUI); 
+   }
+
+  if (bType.biomeType != biomeGUI) {
+   // console.log(biomeGUI); 
+    biomeGUI = bType.biomeType; 
+    lambert.setBiomeType(biomeGUI); 
+  }
+
+ // lambert.setBiomeType(bType.biomeType); 
 
     camera.update();
     stats.begin();

@@ -31,6 +31,10 @@ class ShaderProgram {
   unifColor: WebGLUniformLocation;
   unifPlanePos: WebGLUniformLocation;
 
+  //adding GUI elements
+  unifHeight: WebGLUniformLocation; 
+  unifBiomeType: WebGLUniformLocation;
+
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
 
@@ -49,6 +53,11 @@ class ShaderProgram {
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifPlanePos   = gl.getUniformLocation(this.prog, "u_PlanePos");
+
+    //adding GUI elements
+    this.unifHeight   = gl.getUniformLocation(this.prog, "u_Height");
+    this.unifBiomeType = gl.getUniformLocation(this.prog, "u_BiomeType"); 
+    
   }
 
   use() {
@@ -83,6 +92,21 @@ class ShaderProgram {
     this.use();
     if (this.unifPlanePos !== -1) {
       gl.uniform2fv(this.unifPlanePos, pos);
+    }
+  }
+
+  //adding GUI elements 
+  setHeight(num: number) {
+    this.use();
+    if (this.unifHeight !== -1) {
+      gl.uniform1i(this.unifHeight, num);
+    }
+  }
+
+  setBiomeType(num: number) {
+    this.use();
+    if (this.unifBiomeType !== -1) {
+      gl.uniform1i(this.unifBiomeType, num);
     }
   }
 

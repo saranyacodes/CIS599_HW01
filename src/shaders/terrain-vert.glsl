@@ -6,6 +6,10 @@ uniform mat4 u_ModelInvTr;
 uniform mat4 u_ViewProj;
 uniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane
 
+//GUI elements 
+uniform int u_Height; 
+uniform int u_BiomeType; 
+
 in vec4 vs_Pos;
 in vec4 vs_Nor;
 in vec4 vs_Col;
@@ -15,6 +19,8 @@ out vec4 fs_Nor;
 out vec4 fs_Col;
 
 out float fs_Sine;
+
+out float fbm_val; 
 
 float random1( vec2 p , vec2 seed) {
   return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);
@@ -250,22 +256,43 @@ void main()
    float z_pos = vs_Pos.z + u_PlanePos.y;
    vec2 input_pos = vec2(x_pos, z_pos); 
 
+   fbm_val = fbm(input_pos); 
+
 
   fs_Sine = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1));
  
-  fs_Sine = fs_Sine * 0.5 * fbm (input_pos); //trying something 
+ // fs_Sine = fs_Sine * 2.0 * fbm (input_pos); //trying something 
 
-  //trying something 2
+
+
+  if (u_BiomeType == 3) {
+        float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
+    fs_Sine = sineTerm * fbm (input_pos) * 20.0; //2b also --> flat mountain tops 
+    fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b
+
+
+  } else if (u_BiomeType == 2) {
+      //2d can be a variation of 2c when we adjust the height.... somehow... cottoncandy forest
+      float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
+       fs_Sine = fbm (input_pos * 0.3) ; //2c
+       fs_Sine = fbm (input_pos * 0.3) + sineTerm * 0.2; //2d
+
+  } else {
+    //OPTION 1: demonic mountain 
+      //trying something 2
+  //the times 2 term below should control the height of the ridges 
   float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
-  fs_Sine = sineTerm * fbm (input_pos); //2a
-  
-  fs_Sine = fbm (input_pos * 0.3) ; //2c
-    fs_Sine = fbm (input_pos * 0.3) + sineTerm * 0.2; //2d
+  fs_Sine = sineTerm * fbm (input_pos); //2a ... demonic mountain ridge
+  }
 
 
- // fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b
+
+//fs_Sine = sineTerm * fbm (input_pos) * 20.0; //2b also --> flat mountain tops 
+  //fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b
 
  // fs_Sine = basicNoise(input_pos); 
+
+ //fs_Sine = float(u_Height); --> I'm able to bring GUI elements over 
 
 
 // //trying 3 
