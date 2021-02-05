@@ -1,4 +1,4 @@
-import {vec2, vec4, mat4} from 'gl-matrix';
+import {vec2, vec3, vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
 
@@ -34,6 +34,10 @@ class ShaderProgram {
   //adding GUI elements
   unifHeight: WebGLUniformLocation; 
   unifBiomeType: WebGLUniformLocation;
+  unifOpacity: WebGLUniformLocation;
+  unifGrayscale: WebGLUniformLocation;
+  unifColorOne: WebGLUniformLocation; 
+  unifColorTwo: WebGLUniformLocation; 
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -57,6 +61,10 @@ class ShaderProgram {
     //adding GUI elements
     this.unifHeight   = gl.getUniformLocation(this.prog, "u_Height");
     this.unifBiomeType = gl.getUniformLocation(this.prog, "u_BiomeType"); 
+    this.unifOpacity = gl.getUniformLocation(this.prog, "u_Opacity"); 
+    this.unifGrayscale = gl.getUniformLocation(this.prog, "u_Grayscale");
+    this.unifColorOne =  gl.getUniformLocation(this.prog, "u_ColorOne");
+    this.unifColorTwo =  gl.getUniformLocation(this.prog, "u_ColorTwo");
     
   }
 
@@ -107,6 +115,34 @@ class ShaderProgram {
     this.use();
     if (this.unifBiomeType !== -1) {
       gl.uniform1i(this.unifBiomeType, num);
+    }
+  }
+
+  setOpacity(num: number) {
+    this.use();
+    if (this.unifOpacity !== -1) {
+      gl.uniform1i(this.unifOpacity, num);
+    }
+  }
+
+  setGrayscale(num: number) {
+    this.use();
+    if (this.unifGrayscale !== -1) {
+      gl.uniform1i(this.unifGrayscale, num);
+    }
+  }
+
+  setColorOne(pos: vec3) {
+    this.use();
+    if (this.unifColorOne !== -1) {
+      gl.uniform3fv(this.unifColorOne, pos);
+    }
+  }
+
+  setColorTwo(pos: vec3) {
+    this.use();
+    if (this.unifColorTwo !== -1) {
+      gl.uniform3fv(this.unifColorTwo, pos);
     }
   }
 

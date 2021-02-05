@@ -3,6 +3,15 @@ precision highp float;
 
 uniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane
 
+//adding GUI elements
+//uniform int u_BiomeType; 
+//uniform int u_Height; 
+in float fs_BiomeType; 
+in float fs_Opacity; 
+in float fs_Grayscale; 
+uniform vec3 u_ColorOne; 
+uniform vec3 u_ColorTwo; 
+
 in vec3 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_Col;
@@ -102,18 +111,48 @@ vec4 demonicMountainColor() {
 
 }
 
+
+
+float voronoi( vec2 x )
+{
+    // ivec2 p = floor( x );
+     ivec2 p = ivec2(floor(x.x), floor(x.y));
+     vec2  f = fract( x );
+
+    float res = 8.0;
+    for( int j=-1; j<=1; j++ )
+    for( int i=-1; i<=1; i++ )
+    {
+         ivec2 b = ivec2( i, j );
+        vec2  r = vec2( b ) - f + random2( vec2(p + b) );
+         float d = dot( r, r );
+
+         res = min( res, d );
+    }
+    return sqrt( res );
+}
+
 vec4 test() {
     float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog
 
    // vec3 exampleVec = vec3(164.0 / 255.0, 233.0 / 255.0, 1.0); 
     vec3 exampleVec = vec3(0.0 / 255.0, 0.0 / 255.0, 1.0); 
 
+    float x_pos = fs_Pos.x + u_PlanePos.x; 
+   float z_pos = fs_Pos.z + u_PlanePos.y;
+   vec2 input_pos = vec2(x_pos, z_pos); 
+   float voronoise = voronoi(input_pos); 
+
 
     vec4 returnColor = vec4(mix(vec3(0.5 * (fbm_val + 1.0)), exampleVec, t), 1.0); //REPLACE fs_Sine with fbm_val for some funky coloring'
 
-    vec4 greyColor = vec4(64.0, 64.0, 64.0, 255.0) / 255.0; 
-    vec4 redColor = vec4(204.0, 0.0, 0.0, 255.0) / 255.0; 
-    returnColor = whiteBlackMap(returnColor, redColor, greyColor, 0.3, 1.0); 
+    // vec4 greyColor = vec4(64.0, 64.0, 64.0, 255.0) / 255.0; 
+    // vec4 redColor = vec4(204.0, 0.0, 0.0, 255.0) / 255.0; 
+
+    vec4 colorOne = vec4(u_ColorOne, 255.0) / 255.0; 
+    vec4 colorTwo = vec4(u_ColorTwo, 255.0) / 255.0; 
+
+    returnColor = whiteBlackMap(returnColor, colorOne, colorTwo, 0.3, 1.0); 
 
     if (fbm_val < 0.1) {
         //returnColor *= 3.0; 
@@ -133,9 +172,15 @@ vec4 test() {
 
 void main()
 {
-    float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog
-    out_Col = vec4(mix(vec3(0.5 * (fs_Sine + 1.0)), vec3(164.0 / 255.0, 233.0 / 255.0, 1.0), t), 1.0);
 
-  // out_Col = demonicMountainColor(); 
- // out_Col = test(); 
+    if (fs_Grayscale == 1.0) { 
+        float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog
+         out_Col = vec4(mix(vec3(0.5 * (fs_Sine + 1.0)), vec3(164.0 / 255.0, 233.0 / 255.0, 1.0), t), 1.0);
+
+    } else {
+        out_Col = test(); 
+    }
+    
+    //set the opacity based on GUI element input 
+    out_Col.w = fs_Opacity / 100.0;  
 }

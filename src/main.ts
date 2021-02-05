@@ -7,6 +7,7 @@ import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
 import {setGL} from './globals';
 import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
+import { cpuUsage } from 'process';
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
@@ -26,6 +27,10 @@ let planePos: vec2;
 //trying to add GUI elements 
 let heightGUI: number;
 let biomeGUI: number; 
+let opacityGUI: number; 
+let grayscaleGUI: boolean; 
+let color1: vec3; 
+let color2: vec3; 
 
 function loadScene() {
   square = new Square(vec3.fromValues(0, 0, 0));
@@ -87,6 +92,15 @@ function main() {
   // Add controls to the gui
   const gui = new DAT.GUI({});
 
+    //for the biome types 
+ var bType =
+ {
+     biomeType: 1,
+ }
+ var bt = gui.add(bType, 'biomeType', { DreadMountains: 1, CottonCandyHills: 2, FlatWasteLand: 3 } );
+ biomeGUI = bType.biomeType; 
+
+
     //add controls for height 
   var h = {height: 50}; 
   var h_gui = gui.add(h, 'height', 0, 100); 
@@ -97,41 +111,46 @@ function main() {
   h_gui.listen(); 
   heightGUI = h.height; 
 
-//example for passing through changing values 
-  var person = {
-    name: 'Anne',
-    oldName: 'Anne',
-    setName: function() {
-      var oldName = this.oldName;
-      var newName = this.name;
-      alert('Changing ' + oldName + " to " + newName);
-      this.oldName = this.name;
-    }
-};
+  //add controls for opacity
+  var o = {opacity: 100}; 
+  var o_gui = gui.add(o, 'opacity', 0, 100); 
+  opacityGUI = 50; //setting this to a diff number so that it changes in the tick loop 
 
-gui.add(person, 'name');
-gui.add(person, 'setName');
+
+//example for passing through changing values 
+//   var person = {
+//     name: 'Anne',
+//     oldName: 'Anne',
+//     setName: function() {
+//       var oldName = this.oldName;
+//       var newName = this.name;
+//       alert('Changing ' + oldName + " to " + newName);
+//       this.oldName = this.name;
+//     }
+// };
+
+// gui.add(person, 'name');
+// gui.add(person, 'setName');
 //end example  
 
+var gs = {grayscale: true};
+var gs_gui = gui.add(gs, 'grayscale', true);
+grayscaleGUI = !gs.grayscale; 
+
+
   var palette = {
-    color1: '#FF0000', // CSS string
-    color2: [ 0, 128, 255 ], // RGB array
-    color3: [ 0, 128, 255, 0.3 ], // RGB with alpha
-    color4: { h: 350, s: 0.9, v: 0.3 } // Hue, saturation, value
+    color1: [ 0, 128, 255 ], // CSS string
+    color2: [ 0, 255, 255 ]
+
   };
+
+  color1 = vec3.fromValues(0, 0, 0);
+  color2 = vec3.fromValues(0, 0, 0);  
+
 
   gui.addColor(palette, 'color1');
   gui.addColor(palette, 'color2');
-  gui.addColor(palette, 'color3');
-  gui.addColor(palette, 'color4');
 
-  //for the biome types 
- var bType =
- {
-     biomeType: 1,
- }
- var bt = gui.add(bType, 'biomeType', { DreadMountains: 1, CottonCandyForest: 2, FlatWasteLand: 3 } );
- biomeGUI = bType.biomeType; 
 
 
 
@@ -200,7 +219,46 @@ gui.add(person, 'setName');
     lambert.setBiomeType(biomeGUI); 
   }
 
- // lambert.setBiomeType(bType.biomeType); 
+  if (opacityGUI != o.opacity) {
+    opacityGUI = o.opacity; 
+    lambert.setOpacity(opacityGUI); 
+  }
+
+  //check for grayscale 
+  if (grayscaleGUI != gs.grayscale) {
+    grayscaleGUI = !grayscaleGUI; 
+    
+    if (grayscaleGUI) {
+      //pass in a 1 for true
+      lambert.setGrayscale(1);
+
+    } else {
+      //pass in a 0 for false 
+      lambert.setGrayscale(0); 
+
+    }
+    
+  } 
+
+
+  //check for color changing 
+  if (color1 != vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2])) {
+    //update color1
+    color1 = vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2]); 
+    
+    //console.log('x: ' + palette.color1[0] + ', y: ' + palette.color1[1] + ', z: ' + palette.color1[2] + ', w: ' + palette.color1[3]); 
+    lambert.setColorOne(color1); 
+    //console.log('color1: '+ color1); 
+    console.log(color1); 
+
+  }
+
+  if (color2 != vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2])) {
+    //update color2
+    color2 = vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2]); 
+    lambert.setColorTwo(color2); 
+
+  }
 
     camera.update();
     stats.begin();

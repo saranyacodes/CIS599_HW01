@@ -9,6 +9,10 @@ uniform vec2 u_PlanePos; // Our location in the virtual world displayed by the p
 //GUI elements 
 uniform int u_Height; 
 uniform int u_BiomeType; 
+uniform int u_Opacity; 
+uniform int u_Grayscale; 
+uniform vec3 u_ColorOne; 
+uniform vec3 u_ColorTwo; 
 
 in vec4 vs_Pos;
 in vec4 vs_Nor;
@@ -21,6 +25,11 @@ out vec4 fs_Col;
 out float fs_Sine;
 
 out float fbm_val; 
+
+//sending GUI elements (need to send as float apparently)
+out float fs_BiomeType; 
+out float fs_Opacity; 
+out float fs_Grayscale; 
 
 float random1( vec2 p , vec2 seed) {
   return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);
@@ -231,7 +240,7 @@ float fbm (vec2 p) {
 
     //total += interpNoise2D_1(p * freq) * amp; 
 
-   // total += WorleyNoise(p * freq) * amp; 
+    //total += WorleyNoise(p * freq) * amp; 
 
    //total += voronoi(p * freq) * amp; 
 
@@ -244,6 +253,18 @@ float fbm (vec2 p) {
 }
 
 
+//mapping function to map something from min max to another min max 
+//reference: https://gamedev.stackexchange.com/questions/147890/is-there-an-hlsl-equivalent-to-glsls-map-function 
+float map_range(float v, float min1, float max1, float min2, float max2) {
+        // Convert the current value to a percentage
+    // 0% - min1, 100% - max1
+    float perc = (v - min1) / (max1 - min1);
+
+    // Do the same operation backwards with min2 and max2
+    float newV = perc * (max2 - min2) + min2;
+
+    return newV; 
+}
 
 
 
@@ -266,49 +287,48 @@ void main()
 
 
   if (u_BiomeType == 3) {
-        float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
+    //OPTION 3: mountain flats 
+  float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
     fs_Sine = sineTerm * fbm (input_pos) * 20.0; //2b also --> flat mountain tops 
     fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b
 
+    //lets map a height between 0 and 1.1 to between 0 and heightTerm (where height is mapped 0/100 to 0.3 --> 1.5 )
+    float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.3, 1.5); 
+    float newHeight = map_range(fs_Sine, 0.0, 1.1, 0.0, heightTerm); 
+    fs_Sine = newHeight; 
+
 
   } else if (u_BiomeType == 2) {
+    //OPTION 2: cottoncandy forest
       //2d can be a variation of 2c when we adjust the height.... somehow... cottoncandy forest
       float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
-       fs_Sine = fbm (input_pos * 0.3) ; //2c
-       fs_Sine = fbm (input_pos * 0.3) + sineTerm * 0.2; //2d
+      
+      float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.0, 8.0); 
+       fs_Sine = fbm (input_pos * 0.3) + 0.5 * voronoi(input_pos * 0.3) * sineTerm * heightTerm; //2c
 
   } else {
     //OPTION 1: demonic mountain 
-      //trying something 2
-  //the times 2 term below should control the height of the ridges 
-  float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
+  float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.1, 5.0);  
+
+  float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * heightTerm - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);
   fs_Sine = sineTerm * fbm (input_pos); //2a ... demonic mountain ridge
   }
 
 
 
-//fs_Sine = sineTerm * fbm (input_pos) * 20.0; //2b also --> flat mountain tops 
-  //fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b
-
- // fs_Sine = basicNoise(input_pos); 
-
- //fs_Sine = float(u_Height); --> I'm able to bring GUI elements over 
 
 
-// //trying 3 
-// float height = fbm(vec2(1000.101, -1000.101));
-// height = pow(smoothstep(0.2, 0.8, height), 3.0) * 33.0; 
-// fs_Sine = height; 
+ 
+
+//GUI elements... out variables 
+ fs_BiomeType = float (u_BiomeType); 
+ fs_Opacity = float (u_Opacity); 
+fs_Grayscale = float (u_Grayscale); 
+
 
   vec4 modelposition = vec4(vs_Pos.x, fs_Sine, vs_Pos.z, 1.0);
   modelposition = u_Model * modelposition;
   gl_Position = u_ViewProj * modelposition;
 
-  /*
-  fs_Pos = vs_Pos.xyz;
-  fs_Sine = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1));
-  vec4 modelposition = vec4(vs_Pos.x, fs_Sine * 2.0, vs_Pos.z, 1.0);
-  modelposition = u_Model * modelposition;
-  gl_Position = u_ViewProj * modelposition;
-  */
+
 }
