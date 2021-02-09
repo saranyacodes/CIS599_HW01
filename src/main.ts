@@ -139,8 +139,8 @@ grayscaleGUI = !gs.grayscale;
 
 
   var palette = {
-    color1: [ 0, 128, 255 ], // CSS string
-    color2: [ 0, 255, 255 ]
+    color1: "#0080ff", 
+    color2: "#00ffff"
 
   };
 
@@ -204,6 +204,15 @@ grayscaleGUI = !gs.grayscale;
     planePos = newPos;
   }
 
+  var hexToRgb = function(hex : string) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+  }
+
   // This function will be called every frame
   function tick() {
    
@@ -242,23 +251,30 @@ grayscaleGUI = !gs.grayscale;
 
 
   //check for color changing 
-  if (color1 != vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2])) {
-    //update color1
-    color1 = vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2]); 
+
+ var rgbColor1 = hexToRgb(palette.color1); 
+ lambert.setColorOne(vec3.fromValues(rgbColor1.r, rgbColor1.g, rgbColor1.b)); 
+
+ var rgbColor2 = hexToRgb(palette.color2); 
+ lambert.setColorTwo(vec3.fromValues(rgbColor2.r, rgbColor2.g, rgbColor2.b)); 
+
+  // if (color1 != vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2])) {
+  //   //update color1
+  //   color1 = vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2]); 
     
-    //console.log('x: ' + palette.color1[0] + ', y: ' + palette.color1[1] + ', z: ' + palette.color1[2] + ', w: ' + palette.color1[3]); 
-    lambert.setColorOne(color1); 
-    //console.log('color1: '+ color1); 
-    console.log(color1); 
+  //   console.log('x: ' + palette.color1[0] + ', y: ' + palette.color1[1] + ', z: ' + palette.color1[2] + ', w: ' + palette.color1[3]); 
+  //   lambert.setColorOne(color1); 
+  //   //console.log('color1: '+ color1); 
+  //   console.log(color1); 
 
-  }
+  // }
 
-  if (color2 != vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2])) {
-    //update color2
-    color2 = vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2]); 
-    lambert.setColorTwo(color2); 
+  // if (color2 != vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2])) {
+  //   //update color2
+  //   color2 = vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2]); 
+  //   lambert.setColorTwo(color2); 
 
-  }
+  // }
 
     camera.update();
     stats.begin();
