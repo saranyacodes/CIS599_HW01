@@ -2,6 +2,8 @@
 
 ## Saranya Sampath Submission 
 
+Here is the link for the assignment: https://saranyacodes.github.io/CIS599_HW01/
+
 For this assignment, I decided to make three different types of terrain. 
 1) DreadMountains 
 2) CottonCandyHills

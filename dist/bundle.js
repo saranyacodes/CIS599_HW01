@@ -5988,6 +5988,13 @@ let aPressed;
 let sPressed;
 let dPressed;
 let planePos;
+//trying to add GUI elements 
+let heightGUI;
+let biomeGUI;
+let opacityGUI;
+let grayscaleGUI;
+let color1;
+let color2;
 function loadScene() {
     square = new __WEBPACK_IMPORTED_MODULE_3__geometry_Square__["a" /* default */](__WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* vec3 */].fromValues(0, 0, 0));
     square.create();
@@ -6041,7 +6048,51 @@ function main() {
     stats.domElement.style.top = '0px';
     document.body.appendChild(stats.domElement);
     // Add controls to the gui
-    const gui = new __WEBPACK_IMPORTED_MODULE_2_dat_gui__["GUI"]();
+    const gui = new __WEBPACK_IMPORTED_MODULE_2_dat_gui__["GUI"]({});
+    //for the biome types 
+    var bType = {
+        biomeType: 1,
+    };
+    var bt = gui.add(bType, 'biomeType', { DreadMountains: 1, CottonCandyHills: 2, FlatWasteLand: 3 });
+    biomeGUI = bType.biomeType;
+    //add controls for height 
+    var h = { height: 50 };
+    var h_gui = gui.add(h, 'height', 0, 100);
+    h_gui.onChange = function (newHeight) {
+        console.log("Value changed to:  ", newHeight);
+        alert("Value changed to:  " + newHeight);
+    };
+    h_gui.listen();
+    heightGUI = h.height;
+    //add controls for opacity
+    var o = { opacity: 100 };
+    var o_gui = gui.add(o, 'opacity', 0, 100);
+    opacityGUI = 50; //setting this to a diff number so that it changes in the tick loop 
+    //example for passing through changing values 
+    //   var person = {
+    //     name: 'Anne',
+    //     oldName: 'Anne',
+    //     setName: function() {
+    //       var oldName = this.oldName;
+    //       var newName = this.name;
+    //       alert('Changing ' + oldName + " to " + newName);
+    //       this.oldName = this.name;
+    //     }
+    // };
+    // gui.add(person, 'name');
+    // gui.add(person, 'setName');
+    //end example  
+    var gs = { grayscale: true };
+    var gs_gui = gui.add(gs, 'grayscale', true);
+    grayscaleGUI = !gs.grayscale;
+    var palette = {
+        color1: "#0080ff",
+        color2: "#00ffff"
+    };
+    color1 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* vec3 */].fromValues(0, 0, 0);
+    color2 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* vec3 */].fromValues(0, 0, 0);
+    gui.addColor(palette, 'color1');
+    gui.addColor(palette, 'color2');
     // get canvas and webgl context
     const canvas = document.getElementById('canvas');
     const gl = canvas.getContext('webgl2');
@@ -6084,8 +6135,60 @@ function main() {
         lambert.setPlanePos(newPos);
         planePos = newPos;
     }
+    var hexToRgb = function (hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    };
     // This function will be called every frame
     function tick() {
+        //functions which will update the GUI 
+        if (heightGUI != h.height) {
+            heightGUI = h.height;
+            lambert.setHeight(heightGUI);
+        }
+        if (bType.biomeType != biomeGUI) {
+            // console.log(biomeGUI); 
+            biomeGUI = bType.biomeType;
+            lambert.setBiomeType(biomeGUI);
+        }
+        if (opacityGUI != o.opacity) {
+            opacityGUI = o.opacity;
+            lambert.setOpacity(opacityGUI);
+        }
+        //check for grayscale 
+        if (grayscaleGUI != gs.grayscale) {
+            grayscaleGUI = !grayscaleGUI;
+            if (grayscaleGUI) {
+                //pass in a 1 for true
+                lambert.setGrayscale(1);
+            }
+            else {
+                //pass in a 0 for false 
+                lambert.setGrayscale(0);
+            }
+        }
+        //check for color changing 
+        var rgbColor1 = hexToRgb(palette.color1);
+        lambert.setColorOne(__WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* vec3 */].fromValues(rgbColor1.r, rgbColor1.g, rgbColor1.b));
+        var rgbColor2 = hexToRgb(palette.color2);
+        lambert.setColorTwo(__WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* vec3 */].fromValues(rgbColor2.r, rgbColor2.g, rgbColor2.b));
+        // if (color1 != vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2])) {
+        //   //update color1
+        //   color1 = vec3.fromValues(palette.color1[0], palette.color1[1], palette.color1[2]); 
+        //   console.log('x: ' + palette.color1[0] + ', y: ' + palette.color1[1] + ', z: ' + palette.color1[2] + ', w: ' + palette.color1[3]); 
+        //   lambert.setColorOne(color1); 
+        //   //console.log('color1: '+ color1); 
+        //   console.log(color1); 
+        // }
+        // if (color2 != vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2])) {
+        //   //update color2
+        //   color2 = vec3.fromValues(palette.color2[0], palette.color2[1], palette.color2[2]); 
+        //   lambert.setColorTwo(color2); 
+        // }
         camera.update();
         stats.begin();
         gl.viewport(0, 0, window.innerWidth, window.innerHeight);
@@ -16405,6 +16508,13 @@ class ShaderProgram {
         this.unifModelInvTr = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_ModelInvTr");
         this.unifViewProj = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_ViewProj");
         this.unifPlanePos = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_PlanePos");
+        //adding GUI elements
+        this.unifHeight = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_Height");
+        this.unifBiomeType = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_BiomeType");
+        this.unifOpacity = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_Opacity");
+        this.unifGrayscale = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_Grayscale");
+        this.unifColorOne = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_ColorOne");
+        this.unifColorTwo = __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].getUniformLocation(this.prog, "u_ColorTwo");
     }
     use() {
         if (activeProgram !== this.prog) {
@@ -16436,6 +16546,43 @@ class ShaderProgram {
             __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform2fv(this.unifPlanePos, pos);
         }
     }
+    //adding GUI elements 
+    setHeight(num) {
+        this.use();
+        if (this.unifHeight !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform1i(this.unifHeight, num);
+        }
+    }
+    setBiomeType(num) {
+        this.use();
+        if (this.unifBiomeType !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform1i(this.unifBiomeType, num);
+        }
+    }
+    setOpacity(num) {
+        this.use();
+        if (this.unifOpacity !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform1i(this.unifOpacity, num);
+        }
+    }
+    setGrayscale(num) {
+        this.use();
+        if (this.unifGrayscale !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform1i(this.unifGrayscale, num);
+        }
+    }
+    setColorOne(pos) {
+        this.use();
+        if (this.unifColorOne !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform3fv(this.unifColorOne, pos);
+        }
+    }
+    setColorTwo(pos) {
+        this.use();
+        if (this.unifColorTwo !== -1) {
+            __WEBPACK_IMPORTED_MODULE_1__globals__["a" /* gl */].uniform3fv(this.unifColorTwo, pos);
+        }
+    }
     draw(d) {
         this.use();
         if (this.attrPos != -1 && d.bindPos()) {
@@ -16462,13 +16609,13 @@ class ShaderProgram {
 /* 69 */
 /***/ (function(module, exports) {
 
-module.exports = "#version 300 es\r\n\r\n\r\nuniform mat4 u_Model;\r\nuniform mat4 u_ModelInvTr;\r\nuniform mat4 u_ViewProj;\r\nuniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane\r\n\r\nin vec4 vs_Pos;\r\nin vec4 vs_Nor;\r\nin vec4 vs_Col;\r\n\r\nout vec3 fs_Pos;\r\nout vec4 fs_Nor;\r\nout vec4 fs_Col;\r\n\r\nout float fs_Sine;\r\n\r\nfloat random1( vec2 p , vec2 seed) {\r\n  return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);\r\n}\r\n\r\nfloat random1( vec3 p , vec3 seed) {\r\n  return fract(sin(dot(p + seed, vec3(987.654, 123.456, 531.975))) * 85734.3545);\r\n}\r\n\r\nvec2 random2( vec2 p , vec2 seed) {\r\n  return fract(sin(vec2(dot(p + seed, vec2(311.7, 127.1)), dot(p + seed, vec2(269.5, 183.3)))) * 85734.3545);\r\n}\r\n\r\nvoid main()\r\n{\r\n  fs_Pos = vs_Pos.xyz;\r\n  fs_Sine = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1));\r\n  vec4 modelposition = vec4(vs_Pos.x, fs_Sine * 2.0, vs_Pos.z, 1.0);\r\n  modelposition = u_Model * modelposition;\r\n  gl_Position = u_ViewProj * modelposition;\r\n}\r\n"
+module.exports = "#version 300 es\r\n\r\n\r\nuniform mat4 u_Model;\r\nuniform mat4 u_ModelInvTr;\r\nuniform mat4 u_ViewProj;\r\nuniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane\r\n\r\n//GUI elements \r\nuniform int u_Height; \r\nuniform int u_BiomeType; \r\nuniform int u_Opacity; \r\nuniform int u_Grayscale; \r\nuniform vec3 u_ColorOne; \r\nuniform vec3 u_ColorTwo; \r\n\r\nin vec4 vs_Pos;\r\nin vec4 vs_Nor;\r\nin vec4 vs_Col;\r\n\r\nout vec3 fs_Pos;\r\nout vec4 fs_Nor;\r\nout vec4 fs_Col;\r\n\r\nout float fs_Sine;\r\n\r\nout float fbm_val; \r\n\r\n//sending GUI elements (need to send as float apparently)\r\nout float fs_BiomeType; \r\nout float fs_Opacity; \r\nout float fs_Grayscale; \r\n\r\nfloat random1( vec2 p , vec2 seed) {\r\n  return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);\r\n}\r\n\r\nfloat random1( vec3 p , vec3 seed) {\r\n  return fract(sin(dot(p + seed, vec3(987.654, 123.456, 531.975))) * 85734.3545);\r\n}\r\n\r\nvec2 random2( vec2 p , vec2 seed) {\r\n  return fract(sin(vec2(dot(p + seed, vec2(311.7, 127.1)), dot(p + seed, vec2(269.5, 183.3)))) * 85734.3545);\r\n}\r\n\r\n//noise example from slides (Slide 5)\r\nvec3 random1(vec3 p) {\r\n  float a = dot(p, vec3(127.1, 311.7, 191.999));\r\n  float b = dot(p, vec3(269.5, 183.3, 765.54));\r\n  float c = dot(p, vec3(420.69, 631.2, 109.21)); \r\n  vec3 d = vec3(a, b, c); \r\n\r\n  vec3 e = fract(sin(d) * 43758.5453);\r\n  return e; \r\n\r\n}\r\n\r\n//noise example from slides\r\nfloat random1(vec2 p) {\r\n  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); \r\n}\r\n\r\nvec2 random2( vec2 p ) {\r\n    return fract(sin(vec2(dot(p, vec2(127.1, 311.7)),\r\n                 dot(p, vec2(269.5,183.3))))\r\n                 * 43758.5453);\r\n}\r\n\r\n//interpNoise2D from the slides (slide 11)\r\nfloat interpNoise2D_1(vec2 p) {\r\n  float x = p.x; \r\n  float y = p.y; \r\n\r\n  vec2 seed = vec2(vs_Pos.x, vs_Pos.z); //I added this as a seed (using the position x z)\r\n  //  float x_pos = vs_Pos.x + u_PlanePos.x; \r\n  //  float z_pos = vs_Pos.z + u_PlanePos.y;\r\n  seed = vec2(1.0, 1.0) * 0.5; //using this as the seed\r\n\r\n  float intX = floor(x); \r\n  float fractX = fract(x); \r\n  float intY = floor(y); \r\n  float fractY = fract(y); \r\n\r\n  float v1 = random1(vec2(intX, intY), seed); \r\n  float v2 = random1(vec2(intX + 1.0, intY), seed); \r\n  float v3 = random1(vec2(intX, intY + 1.0), seed); \r\n  float v4 = random1(vec2(intX + 1.0, intY + 1.0), seed); \r\n\r\n  float i1 = mix(v1, v2, fractX); \r\n  float i2 = mix(v3, v4, fractX); \r\n  return mix(i1, i2, fractY); \r\n\r\n}\r\n\r\n//same as interpNoise2D_1 but the random1 function is different\r\nfloat interpNoise2D_2(vec2 p) {\r\n  float x = p.x; \r\n  float y = p.y; \r\n\r\n  float intX = floor(x); \r\n  float fractX = fract(x); \r\n  float intY = floor(y); \r\n  float fractY = fract(y); \r\n\r\n   float v1 = random1(vec2(intX, intY)); \r\n   float v2 = random1(vec2(intX + 1.0, intY)); \r\n   float v3 = random1(vec2(intX, intY + 1.0)); \r\n   float v4 = random1(vec2(intX + 1.0, intY + 1.0)); \r\n\r\n  float i1 = mix(v1, v2, fractX); \r\n  float i2 = mix(v3, v4, fractX); \r\n  return mix(i1, i2, fractY); \r\n\r\n  return 1.0; \r\n\r\n}\r\n\r\n//noised function from IQ: https://iquilezles.org/www/articles/morenoise/morenoise.htm (goes with the terrain noise function below)\r\nvec4 noised (vec3 x) {\r\n  vec3 p = floor(x);\r\n    vec3 w = fract(x);\r\n    vec3 u = w*w*w*(w*(w*6.0-15.0)+10.0);\r\n    vec3 du = 30.0*w*w*(w*(w-2.0)+1.0);\r\n\r\n    vec3 seed = vec3(1.0, 1.0, 1.0) * 0.5; //using this as the seed\r\n\r\n  //random1 takes in vec3 and returns float \r\n    float a = random1( p+vec3(0,0,0), seed );\r\n    float b = random1( p+vec3(1,0,0), seed );\r\n    float c = random1( p+vec3(0,1,0), seed );\r\n    float d = random1( p+vec3(1,1,0), seed );\r\n    float e = random1( p+vec3(0,0,1), seed );\r\n    float f = random1( p+vec3(1,0,1), seed );\r\n    float g = random1( p+vec3(0,1,1), seed );\r\n    float h = random1( p+vec3(1,1,1), seed );\r\n\r\n     float k0 =   a;\r\n    float k1 =   b - a;\r\n    float k2 =   c - a;\r\n    float k3 =   e - a;\r\n    float k4 =   a - b - c + d;\r\n    float k5 =   a - c - e + g;\r\n    float k6 =   a - b - e + f;\r\n    float k7 = - a + b + c - d + e - f - g + h;\r\n\r\n    return vec4( -1.0+2.0*(k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z),\r\n                 2.0* du * vec3( k1 + k4*u.y + k6*u.z + k7*u.y*u.z,\r\n                                 k2 + k5*u.z + k4*u.x + k7*u.z*u.x,\r\n                                 k3 + k6*u.x + k5*u.y + k7*u.x*u.y ) );\r\n}\r\n\r\n//terrain noise function from IQ: https://iquilezles.org/www/articles/morenoise/morenoise.htm\r\nfloat interpNoise2D_3(vec2 p) {\r\n  mat2 m = mat2(0.8, -0.6, 0.6, 0.8); \r\n  float a = 0.0; \r\n  float b = 1.0; \r\n  vec2 d = vec2(0.0); \r\n\r\n  for (int i = 0; i < 15; i++) {\r\n    vec3 n = vec3(noised(vec3(p, 1.0))); //noised takes in a 3d vector, so i extend this to 3d and then truncate it \r\n    d +=n.yz;\r\n    a +=b*n.x/(1.0+dot(d,d));\r\n    b *=0.5;\r\n    p=m*p*2.0;\r\n\r\n  }\r\n\r\n  return a; \r\n\r\n\r\n}\r\n\r\n//Worley Noise function from ShaderFun\r\nfloat WorleyNoise(vec2 uv) {\r\n    uv *= 15.0; // Now the space is 10x10 instead of 1x1. Change this to any number you want.\r\n    vec2 uvInt = floor(uv);\r\n    vec2 uvFract = fract(uv);\r\n    float minDist = 1.0; // Minimum distance initialized to max.\r\n    int y_range = 5; \r\n    int x_range = 1; \r\n    for(int y = -y_range; y <= y_range; ++y) {\r\n         for(int x = -x_range; x <= x_range; ++x) {\r\n             vec2 neighbor = vec2(float(x), float(y)); // Direction in which neighbor cell lies\r\n             vec2 point = random2(uvInt + neighbor); // Get the Voronoi centerpoint for the neighboring cell\r\n             vec2 diff = neighbor + point - uvFract; // Distance between fragment coord and neighbor’s Voronoi point\r\n             float dist = length(diff);\r\n             minDist = min(minDist, dist);\r\n         }\r\n    }\r\n    return minDist;\r\n}\r\n\r\n//voronoi function from IQ: https://iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm\r\n\r\nfloat voronoi( vec2 x )\r\n{\r\n    // ivec2 p = floor( x );\r\n     ivec2 p = ivec2(floor(x.x), floor(x.y));\r\n     vec2  f = fract( x );\r\n\r\n    float res = 8.0;\r\n    for( int j=-1; j<=1; j++ )\r\n    for( int i=-1; i<=1; i++ )\r\n    {\r\n         ivec2 b = ivec2( i, j );\r\n        vec2  r = vec2( b ) - f + random2( vec2(p + b) );\r\n         float d = dot( r, r );\r\n\r\n         res = min( res, d );\r\n    }\r\n    return sqrt( res );\r\n}\r\n\r\n//inspired by redblobgames \"redistribution\" https://www.redblobgames.com/maps/terrain-from-noise/#noise \r\nfloat basicNoise (vec2 p) {\r\n\r\n  float noise1 = random1(p); \r\n  float noise2 = random1(vec2(p.x * 2.0, p.y * 2.0)) * 0.5; \r\n  float noise3 = random1(vec2(p.x * 4.0, p.y * 4.0)) * 0.25; \r\n  float e = noise1 + noise2 + noise3; \r\n\r\n  return pow(e, 1.33); \r\n\r\n}\r\n\r\n//fbm noise from lecture slides \r\nfloat fbm (vec2 p) {\r\n  float total = 0.0; \r\n  float persistence = 0.5f; \r\n  int octaves = 8; \r\n\r\n  for (int i = 0; i < octaves; i++) {\r\n    float power = 2.0; \r\n    float freq = pow(power, float(i)); \r\n    float amp = pow(persistence, float(i)); \r\n\r\n    total += interpNoise2D_3(p * freq) * amp; //can replace interpNoise2D with any noise function that takes in a vec2 and returns a float (TODO)\r\n\r\n    // total += interpNoise2D_2(p * freq) * amp; \r\n\r\n    //total += interpNoise2D_1(p * freq) * amp; \r\n\r\n    //total += WorleyNoise(p * freq) * amp; \r\n\r\n   //total += voronoi(p * freq) * amp; \r\n\r\n   //total += basicNoise(p * freq) * amp; \r\n\r\n  }\r\n\r\n   return total; \r\n  \r\n}\r\n\r\n\r\n//mapping function to map something from min max to another min max \r\n//reference: https://gamedev.stackexchange.com/questions/147890/is-there-an-hlsl-equivalent-to-glsls-map-function \r\nfloat map_range(float v, float min1, float max1, float min2, float max2) {\r\n        // Convert the current value to a percentage\r\n    // 0% - min1, 100% - max1\r\n    float perc = (v - min1) / (max1 - min1);\r\n\r\n    // Do the same operation backwards with min2 and max2\r\n    float newV = perc * (max2 - min2) + min2;\r\n\r\n    return newV; \r\n}\r\n\r\n\r\n\r\nvoid main()\r\n{\r\n   fs_Pos = vs_Pos.xyz;\r\n\r\n  //based on the x and z position, we want to get a y position \r\n   float x_pos = vs_Pos.x + u_PlanePos.x; \r\n   float z_pos = vs_Pos.z + u_PlanePos.y;\r\n   vec2 input_pos = vec2(x_pos, z_pos); \r\n\r\n   fbm_val = fbm(input_pos); \r\n\r\n\r\n  fs_Sine = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1));\r\n \r\n // fs_Sine = fs_Sine * 2.0 * fbm (input_pos); //trying something \r\n\r\n\r\n\r\n  if (u_BiomeType == 3) {\r\n    //OPTION 3: mountain flats \r\n  float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);\r\n    fs_Sine = sineTerm * fbm (input_pos) * 20.0; //2b also --> flat mountain tops \r\n    fs_Sine = pow(smoothstep(0.0, 0.9, fs_Sine), 3.0); //2b\r\n\r\n    //lets map a height between 0 and 1.1 to between 0 and heightTerm (where height is mapped 0/100 to 0.3 --> 1.5 )\r\n    float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.3, 1.5); \r\n    float newHeight = map_range(fs_Sine, 0.0, 1.1, 0.0, heightTerm); \r\n    fs_Sine = newHeight; \r\n\r\n\r\n  } else if (u_BiomeType == 2) {\r\n    //OPTION 2: cottoncandy forest\r\n      //2d can be a variation of 2c when we adjust the height.... somehow... cottoncandy forest\r\n      float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * 2.0 - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);\r\n      \r\n      float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.0, 8.0); \r\n       fs_Sine = fbm (input_pos * 0.3) + 0.5 * voronoi(input_pos * 0.3) * sineTerm * heightTerm; //2c\r\n\r\n  } else {\r\n    //OPTION 1: demonic mountain \r\n  float heightTerm = map_range(float(u_Height), 0.0, 100.0, 0.1, 5.0);  \r\n\r\n  float sineTerm = (sin((vs_Pos.x + u_PlanePos.x) * 3.14159 * 0.1) * heightTerm - 0.5 + cos((vs_Pos.z + u_PlanePos.y) * 3.14159 * 0.1) * 1.5);\r\n  fs_Sine = sineTerm * fbm (input_pos); //2a ... demonic mountain ridge\r\n  }\r\n\r\n\r\n\r\n\r\n\r\n \r\n\r\n//GUI elements... out variables \r\n fs_BiomeType = float (u_BiomeType); \r\n fs_Opacity = float (u_Opacity); \r\nfs_Grayscale = float (u_Grayscale); \r\n\r\n\r\n  vec4 modelposition = vec4(vs_Pos.x, fs_Sine, vs_Pos.z, 1.0);\r\n  modelposition = u_Model * modelposition;\r\n  gl_Position = u_ViewProj * modelposition;\r\n\r\n\r\n}\r\n"
 
 /***/ }),
 /* 70 */
 /***/ (function(module, exports) {
 
-module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\nuniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane\r\n\r\nin vec3 fs_Pos;\r\nin vec4 fs_Nor;\r\nin vec4 fs_Col;\r\n\r\nin float fs_Sine;\r\n\r\nout vec4 out_Col; // This is the final output color that you will see on your\r\n                  // screen for the pixel that is currently being processed.\r\n\r\nvoid main()\r\n{\r\n    float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog\r\n    out_Col = vec4(mix(vec3(0.5 * (fs_Sine + 1.0)), vec3(164.0 / 255.0, 233.0 / 255.0, 1.0), t), 1.0);\r\n}\r\n"
+module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\nuniform vec2 u_PlanePos; // Our location in the virtual world displayed by the plane\r\n\r\n//adding GUI elements\r\n//uniform int u_BiomeType; \r\n//uniform int u_Height; \r\nin float fs_BiomeType; \r\nin float fs_Opacity; \r\nin float fs_Grayscale; \r\nuniform vec3 u_ColorOne; \r\nuniform vec3 u_ColorTwo; \r\n\r\nin vec3 fs_Pos;\r\nin vec4 fs_Nor;\r\nin vec4 fs_Col;\r\n\r\nin float fs_Sine;\r\nin float fbm_val; \r\n\r\nout vec4 out_Col; // This is the final output color that you will see on your\r\n                  // screen for the pixel that is currently being processed.\r\n\r\n//from IQ \r\nvec2 random2(vec2 st){\r\n    st = vec2( dot(st,vec2(127.1,311.7)),\r\n              dot(st,vec2(269.5,183.3)) );\r\n    return -1.0 + 2.0*fract(sin(st)*43758.5453123);\r\n}\r\n\r\n// Gradient Noise by Inigo Quilez - iq/2013\r\n// https://www.shadertoy.com/view/XdXGW8\r\nfloat noise(vec2 st) {\r\n    vec2 i = floor(st);\r\n    vec2 f = fract(st);\r\n\r\n    vec2 u = f*f*(3.0-2.0*f);\r\n\r\n    return mix( mix( dot( random2(i + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ),\r\n                     dot( random2(i + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),\r\n                mix( dot( random2(i + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ),\r\n                     dot( random2(i + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y);\r\n}\r\n\r\nconst vec4 redColor = vec4(255.0, 0.0, 0.0, 255.0) / 255.0; \r\nconst vec4 greenColor = vec4(0.0, 255.0, 0.0, 255.0) / 255.0; \r\nconst vec4 blueColor = vec4(0.0, 0.0, 255.0, 255.0) / 255.0; \r\n\r\n//spiky mountains with rivers between them \r\nvec4 mountainsColor() {\r\n\r\n    //do this based on height (which is fs_Sine)\r\n    vec4 returnColor = vec4(0.0); \r\n    if (fs_Sine > 0.5) {\r\n        returnColor = redColor; \r\n\r\n    } else {\r\n        returnColor = blueColor; \r\n\r\n    }\r\n\r\n    return returnColor; \r\n\r\n}\r\n\r\n//mapping function to map something from min max to another min max \r\n//reference: https://gamedev.stackexchange.com/questions/147890/is-there-an-hlsl-equivalent-to-glsls-map-function \r\nfloat map_range(float v, float min1, float max1, float min2, float max2) {\r\n        // Convert the current value to a percentage\r\n    // 0% - min1, 100% - max1\r\n    float perc = (v - min1) / (max1 - min1);\r\n\r\n    // Do the same operation backwards with min2 and max2\r\n    float newV = perc * (max2 - min2) + min2;\r\n\r\n    return newV; \r\n}\r\n\r\n//returns a color mapped to white and black \r\n//given your current color in greyscale and the colors you want to interpolate between returns a color \r\nvec4 whiteBlackMap(vec4 currColor, vec4 newBlack, vec4 newWhite, float lowerBound, float upperBound) {\r\n    float val1 = map_range(currColor.x, lowerBound, upperBound, newBlack.x, newWhite.x); // 0, 1 is black, white\r\n    float val2 = map_range(currColor.y, lowerBound, upperBound, newBlack.y, newWhite.y); \r\n    float val3 = map_range(currColor.z, lowerBound, upperBound, newBlack.z, newWhite.z); \r\n\r\n    vec4 returnValue = vec4(val1, val2, val3, 1.0); \r\n\r\n    return returnValue; \r\n\r\n\r\n}\r\n\r\n//color for demonic mountains \r\nvec4 demonicMountainColor() {\r\n    vec4 returnColor = vec4(0.0); \r\n    float t = 0.0; \r\n    if (fbm_val > -0.5) {\r\n        t = smoothstep(0.75, 1.0, fbm_val / 0.2); \r\n        returnColor = mix(redColor, greenColor, t); \r\n\r\n    } else {\r\n        t = fbm_val / 0.5; \r\n        float noiseVal = t + noise((fs_Pos.xz + u_PlanePos) * 0.25); \r\n        returnColor = mix(greenColor, blueColor, noiseVal); \r\n       // returnColor = blueColor; \r\n\r\n    }\r\n\r\n    return returnColor; \r\n\r\n}\r\n\r\n\r\n\r\nfloat voronoi( vec2 x )\r\n{\r\n    // ivec2 p = floor( x );\r\n     ivec2 p = ivec2(floor(x.x), floor(x.y));\r\n     vec2  f = fract( x );\r\n\r\n    float res = 8.0;\r\n    for( int j=-1; j<=1; j++ )\r\n    for( int i=-1; i<=1; i++ )\r\n    {\r\n         ivec2 b = ivec2( i, j );\r\n        vec2  r = vec2( b ) - f + random2( vec2(p + b) );\r\n         float d = dot( r, r );\r\n\r\n         res = min( res, d );\r\n    }\r\n    return sqrt( res );\r\n}\r\n\r\nvec4 test() {\r\n    float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog\r\n\r\n   // vec3 exampleVec = vec3(164.0 / 255.0, 233.0 / 255.0, 1.0); \r\n    vec3 exampleVec = vec3(0.0 / 255.0, 0.0 / 255.0, 1.0); \r\n\r\n    float x_pos = fs_Pos.x + u_PlanePos.x; \r\n   float z_pos = fs_Pos.z + u_PlanePos.y;\r\n   vec2 input_pos = vec2(x_pos, z_pos); \r\n   float voronoise = voronoi(input_pos); \r\n\r\n\r\n    vec4 returnColor = vec4(mix(vec3(0.5 * (fbm_val + 1.0)), exampleVec, t), 1.0); //REPLACE fs_Sine with fbm_val for some funky coloring'\r\n\r\n    // vec4 greyColor = vec4(64.0, 64.0, 64.0, 255.0) / 255.0; \r\n    // vec4 redColor = vec4(204.0, 0.0, 0.0, 255.0) / 255.0; \r\n\r\n    vec4 colorOne = vec4(u_ColorOne, 255.0) / 255.0; \r\n    vec4 colorTwo = vec4(u_ColorTwo, 255.0) / 255.0; \r\n\r\n    returnColor = whiteBlackMap(returnColor, colorOne, colorTwo, 0.3, 1.0); \r\n\r\n    if (fbm_val < 0.1) {\r\n        //returnColor *= 3.0; \r\n        returnColor.w = 1.0; \r\n\r\n    } else {\r\n        t = fbm_val / 0.5; \r\n        float noiseVal = t + noise((fs_Pos.xz + u_PlanePos) * 0.25); \r\n        //returnColor = mix(greenColor, blueColor, noiseVal); \r\n       // returnColor = blueColor; \r\n\r\n    }\r\n\r\n\r\n    return returnColor; \r\n}\r\n\r\nvoid main()\r\n{\r\n\r\n    if (fs_Grayscale == 1.0) { \r\n        float t = clamp(smoothstep(40.0, 50.0, length(fs_Pos)), 0.0, 1.0); // Distance fog\r\n         out_Col = vec4(mix(vec3(0.5 * (fs_Sine + 1.0)), vec3(164.0 / 255.0, 233.0 / 255.0, 1.0), t), 1.0);\r\n\r\n    } else {\r\n        out_Col = test(); \r\n    }\r\n    \r\n    //set the opacity based on GUI element input \r\n    out_Col.w = fs_Opacity / 100.0;  \r\n}\r\n"
 
 /***/ }),
 /* 71 */
